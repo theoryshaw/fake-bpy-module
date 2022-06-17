@@ -1082,7 +1082,7 @@ class DataTypeRefiner:
             output_log(LOG_LEVEL_WARN, "data_type should be 'INTERMIDIATE' but {}".format(data_type.type()))
 
         if not self.new_get_refined_data_type(data_type):
-            print(data_type)
+            print(f"@@@ {data_type}")
 
         # convert to aliased data type string
         dtype_str = data_type.to_string()
