@@ -1052,12 +1052,37 @@ class DataTypeRefiner:
         self._package_structure: 'ModuleStructure' = package_structure
         self._entry_points: List['EntryPoint'] = entry_points
 
+    def new_get_refined_data_type(self, data_type: 'DataType', module_name: str) -> 'DataType':
+        if re.match(r"^[23][dD] [Vv]ector", data_type):
+            return CustomDataType("Vector")
+        if re.match(r"4x4 mathutils.Matrix", data_type):
+            return CustomDataType("Matrix")
+
+        if re.match(r"^(str|string)(, default)*", data_type):
+            return BuiltinDataType("str")
+        if re.match(r"^tuple", data_type):
+            return ModifierDataType("tuple")
+
+        m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)")
+        if m:
+            dtypes = [
+                CustomDataType(m.group()[1]),
+                CustomDataType(m.group()[2], "list")
+            ]
+            return MixinDataType(dtypes)
+
+        return None
+        raise Exception(f"Not found ({data_type})")
+
     def get_refined_data_type(self, data_type: 'DataType', module_name: str) -> 'DataType':
         if data_type.type() == 'UNKNOWN':
             return UnknownDataType()
 
         if data_type.type() != 'INTERMIDIATE':
             output_log(LOG_LEVEL_WARN, "data_type should be 'INTERMIDIATE' but {}".format(data_type.type()))
+
+        if not self.new_get_refined_data_type(data_type):
+            print(data_type)
 
         # convert to aliased data type string
         dtype_str = data_type.to_string()
