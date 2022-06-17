@@ -1053,17 +1053,19 @@ class DataTypeRefiner:
         self._entry_points: List['EntryPoint'] = entry_points
 
     def new_get_refined_data_type(self, data_type: 'DataType') -> 'DataType':
-        if re.match(r"^[23][dD] [Vv]ector", data_type):
+        dtype_str = data_type.to_string()
+
+        if re.match(r"^[23][dD] [Vv]ector", dtype_str):
             return CustomDataType("Vector")
-        if re.match(r"4x4 mathutils.Matrix", data_type):
+        if re.match(r"4x4 mathutils.Matrix", dtype_str):
             return CustomDataType("Matrix")
 
-        if re.match(r"^(str|string)(, default)*", data_type):
+        if re.match(r"^(str|string)(, default)*", dtype_str):
             return BuiltinDataType("str")
-        if re.match(r"^tuple", data_type):
+        if re.match(r"^tuple", dtype_str):
             return ModifierDataType("tuple")
 
-        m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)")
+        m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)", dtype_str)
         if m:
             dtypes = [
                 CustomDataType(m.group()[1]),
@@ -1082,7 +1084,7 @@ class DataTypeRefiner:
             output_log(LOG_LEVEL_WARN, "data_type should be 'INTERMIDIATE' but {}".format(data_type.type()))
 
         if not self.new_get_refined_data_type(data_type):
-            print(f"@@@ {data_type}")
+            print(f"@@@ {data_type.to_string()}")
 
         # convert to aliased data type string
         dtype_str = data_type.to_string()
