@@ -1052,7 +1052,7 @@ class DataTypeRefiner:
         self._package_structure: 'ModuleStructure' = package_structure
         self._entry_points: List['EntryPoint'] = entry_points
 
-    def new_get_refined_data_type(self, data_type: 'DataType', module_name: str) -> 'DataType':
+    def new_get_refined_data_type(self, data_type: 'DataType') -> 'DataType':
         if re.match(r"^[23][dD] [Vv]ector", data_type):
             return CustomDataType("Vector")
         if re.match(r"4x4 mathutils.Matrix", data_type):
