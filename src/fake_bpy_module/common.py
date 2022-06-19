@@ -1060,7 +1060,7 @@ class DataTypeRefiner:
         if re.match(r"4x4 mathutils.Matrix", dtype_str):
             return CustomDataType("Matrix")
 
-        m = re.match(r"^(int|float|enum) in [([0-9, ]+)], default ([0-9.]+)", dtype_str)
+        m = re.match(r"^(int|float|enum) in \[([0-9, ]+)\], default ([0-9.]+)", dtype_str)
         if m:
             return BuiltinDataType(m.group()[1])
         if re.match(r"^(str|string)(, default)*", dtype_str):
