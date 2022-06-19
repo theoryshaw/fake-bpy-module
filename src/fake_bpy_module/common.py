@@ -1062,7 +1062,14 @@ class DataTypeRefiner:
 
         m = re.match(r"^(int|float|enum) in \[([0-9, ]+)\], default ([0-9.]+)", dtype_str)
         if m:
-            return BuiltinDataType(m.group()[1])
+            if m.group()[1] == "enum":
+                dtypes = [
+                    BuiltinDataType("str"),
+                    BuiltinDataType("int")
+                ]
+                return MixinDataType(dtypes)
+            else:
+                return BuiltinDataType(m.group()[1])
         if re.match(r"^(str|string)(, default)*", dtype_str):
             return BuiltinDataType("str")
         if re.match(r"^tuple", dtype_str):
