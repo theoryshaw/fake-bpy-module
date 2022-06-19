@@ -1060,6 +1060,9 @@ class DataTypeRefiner:
         if re.match(r"4x4 mathutils.Matrix", dtype_str):
             return CustomDataType("Matrix")
 
+        m = re.match(r"^(int|float|enum) in [([0-9, ]+)], default ([0-9.]+)", dtype_str)
+        if m:
+            return BuiltinDataType(m.group()[1])
         if re.match(r"^(str|string)(, default)*", dtype_str):
             return BuiltinDataType("str")
         if re.match(r"^tuple", dtype_str):
@@ -1072,6 +1075,10 @@ class DataTypeRefiner:
                 CustomDataType(m.group()[2], "list")
             ]
             return MixinDataType(dtypes)
+
+        m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
+        if m:
+            return CustomDataType(m.group()[1])
 
         return None
         raise Exception(f"Not found ({data_type})")
