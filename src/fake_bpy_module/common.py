@@ -1085,7 +1085,7 @@ class DataTypeRefiner:
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
-            return CustomDataType(m.groups()[1])
+            return CustomDataType(m.groups()[0])
 
         return None
         raise Exception(f"Not found ({data_type})")
