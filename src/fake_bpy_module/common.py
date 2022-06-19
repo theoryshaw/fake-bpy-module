@@ -1062,14 +1062,14 @@ class DataTypeRefiner:
 
         m = re.match(r"^(int|float|enum) in \[([0-9, ]+)\], default ([0-9.]+)", dtype_str)
         if m:
-            if m.group()[1] == "enum":
+            if m.groups()[1] == "enum":
                 dtypes = [
                     BuiltinDataType("str"),
                     BuiltinDataType("int")
                 ]
                 return MixinDataType(dtypes)
             else:
-                return BuiltinDataType(m.group()[1])
+                return BuiltinDataType(m.groups()[1])
         if re.match(r"^(str|string)(, default)*", dtype_str):
             return BuiltinDataType("str")
         if re.match(r"^tuple", dtype_str):
@@ -1078,14 +1078,14 @@ class DataTypeRefiner:
         m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)", dtype_str)
         if m:
             dtypes = [
-                CustomDataType(m.group()[1]),
-                CustomDataType(m.group()[2], "list")
+                CustomDataType(m.groups()[1]),
+                CustomDataType(m.groups()[2], "list")
             ]
             return MixinDataType(dtypes)
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
-            return CustomDataType(m.group()[1])
+            return CustomDataType(m.groups()[1])
 
         return None
         raise Exception(f"Not found ({data_type})")
