@@ -1055,12 +1055,12 @@ class DataTypeRefiner:
     def new_get_refined_data_type(self, data_type: 'DataType') -> 'DataType':
         dtype_str = data_type.to_string()
 
-        if re.match(r"^[23][dD] [Vv]ector", dtype_str):
+        if re.match(r"^[23][dD] [Vv]ector$", dtype_str):
             return CustomDataType("Vector")
-        if re.match(r"4x4 mathutils.Matrix", dtype_str):
+        if re.match(r"^4x4 mathutils.Matrix$", dtype_str):
             return CustomDataType("Matrix")
 
-        m = re.match(r"^enum in \[(.+)\], default (.+)", dtype_str)
+        m = re.match(r"^enum in \[(.+)\], default (.+)$", dtype_str)
         if m:
             dtypes = [
                 BuiltinDataType("str"),
@@ -1068,7 +1068,10 @@ class DataTypeRefiner:
             ]
             return MixinDataType(dtypes)
 
-        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], default ([-e+0-9. ]+)", dtype_str)
+        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], default ([-e+0-9. ]+)$", dtype_str)
+        if m:
+            return BuiltinDataType(m.group(1))
+        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], \(optional\)$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1))
         if re.match(r"^(str|string)(, default)*", dtype_str):
@@ -1076,7 +1079,7 @@ class DataTypeRefiner:
         if re.match(r"^tuple", dtype_str):
             return ModifierDataType("tuple")
 
-        m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)", dtype_str)
+        m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)$", dtype_str)
         if m:
             dtypes = [
                 CustomDataType(m.group(1)),
@@ -1084,13 +1087,17 @@ class DataTypeRefiner:
             ]
             return MixinDataType(dtypes)
 
-        m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)", dtype_str)
+        m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)$", dtype_str)
         if m:
             return CustomDataType(m.group(1), "list")
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
             return CustomDataType(m.group(0))
+
+        m = re.match(r"^([A-Z][a-zA-Z]+) , \((optional|readonly|never None)\)$", dtype_str)
+        if m:
+            return CustomDataType(m.group(1))
 
         return None
         raise Exception(f"Not found ({data_type})")
