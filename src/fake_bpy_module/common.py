@@ -1060,16 +1060,17 @@ class DataTypeRefiner:
         if re.match(r"4x4 mathutils.Matrix", dtype_str):
             return CustomDataType("Matrix")
 
-        m = re.match(r"^(int|float|enum) in \[([0-9, ]+)\], default ([0-9.]+)", dtype_str)
+        m = re.match(r"^enum in \[(.+)\], default (.+)", dtype_str)
         if m:
-            if m.groups(1) == "enum":
-                dtypes = [
-                    BuiltinDataType("str"),
-                    BuiltinDataType("int")
-                ]
-                return MixinDataType(dtypes)
-            else:
-                return BuiltinDataType(m.group(1))
+            dtypes = [
+                BuiltinDataType("str"),
+                BuiltinDataType("int")
+            ]
+            return MixinDataType(dtypes)
+
+        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], default ([-e+0-9. ]+)", dtype_str)
+        if m:
+            return BuiltinDataType(m.group(1))
         if re.match(r"^(str|string)(, default)*", dtype_str):
             return BuiltinDataType("str")
         if re.match(r"^tuple", dtype_str):
@@ -1082,6 +1083,10 @@ class DataTypeRefiner:
                 CustomDataType(m.group(2), "list")
             ]
             return MixinDataType(dtypes)
+
+        m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)", dtype_str)
+        if m:
+            return CustomDataType(m.group(1), "list")
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
