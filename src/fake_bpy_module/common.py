@@ -1067,11 +1067,32 @@ class DataTypeRefiner:
                 BuiltinDataType("int")
             ]
             return MixinDataType(dtypes)
+        # Ex: enum in ['WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'], (optional)
+        m = re.match(r"^enum in \[(.+)\], \(optional\)$", dtype_str)
+        if m:
+            dtypes = [
+                BuiltinDataType("str"),
+                BuiltinDataType("int")
+            ]
+            return MixinDataType(dtypes)
+        # Ex: enum in ['POINT', 'EDGE', 'FACE', 'CORNER', 'CURVE', 'INSTANCE']
+        m = re.match(r"^enum in \[(.+)\]$", dtype_str)
+        if m:
+            dtypes = [
+                BuiltinDataType("str"),
+                BuiltinDataType("int")
+            ]
+            return MixinDataType(dtypes)
 
-        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], default ([-e+0-9. ]+)$", dtype_str)
+        # Ex: int array of 2 items in [-32768, 32767], default (0, 0)
+        m = re.match(r"^(int|float) array of ([1-4]) items in \[([-einf+0-9,. ]+)\], default \(([-e+0-9., ]+)\)$", dtype_str)
+        if m:
+            return BuiltinDataType(m.group(1), "list")
+        # Ex: int in [-inf, inf], default 0, (readonly)
+        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], default ([-e+0-9. ]+)(, \(readonly\))*$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1))
-        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], \(optional\)$", dtype_str)
+        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\](, \(optional\))*$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1))
         if re.match(r"^(str|string)(, default)*", dtype_str):
@@ -1096,6 +1117,10 @@ class DataTypeRefiner:
             return CustomDataType(m.group(0))
 
         m = re.match(r"^([A-Z][a-zA-Z]+) , \((optional|readonly|never None)\)$", dtype_str)
+        if m:
+            return CustomDataType(m.group(1))
+
+        m = re.match(r"^([a-zA-Z0-9_.]+)$", dtype_str)
         if m:
             return CustomDataType(m.group(1))
 
