@@ -1060,7 +1060,7 @@ class DataTypeRefiner:
         if re.match(r"^4x4 mathutils.Matrix$", dtype_str):
             return CustomDataType("Matrix")
 
-        m = re.match(r"^enum in \[(.+)\], default (.+)$", dtype_str)
+        m = re.match(r"^enum in \[(.*)\], default (.+)$", dtype_str)
         if m:
             dtypes = [
                 BuiltinDataType("str"),
@@ -1068,7 +1068,7 @@ class DataTypeRefiner:
             ]
             return MixinDataType(dtypes)
         # Ex: enum in ['WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'], (optional)
-        m = re.match(r"^enum in \[(.+)\], \(optional\)$", dtype_str)
+        m = re.match(r"^enum in \[(.*)\], \(optional\)$", dtype_str)
         if m:
             dtypes = [
                 BuiltinDataType("str"),
@@ -1084,6 +1084,10 @@ class DataTypeRefiner:
             ]
             return MixinDataType(dtypes)
 
+        # Ex: boolean, default False
+        m = re.match(r"^boolean, default (False|True)$", dtype_str)
+        if m:
+            return BuiltinDataType("bool")
         # Ex: int array of 2 items in [-32768, 32767], default (0, 0)
         m = re.match(r"^(int|float) array of ([1-4]) items in \[([-einf+0-9,. ]+)\], default \(([-e+0-9., ]+)\)$", dtype_str)
         if m:
@@ -1108,7 +1112,8 @@ class DataTypeRefiner:
             ]
             return MixinDataType(dtypes)
 
-        m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)$", dtype_str)
+        # Ex: bpy_prop_collection of ThemeStripColor , (readonly, never None)
+        m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \((.+)\)$", dtype_str)
         if m:
             return CustomDataType(m.group(1), "list")
 
@@ -1116,11 +1121,11 @@ class DataTypeRefiner:
         if m:
             return CustomDataType(m.group(0))
 
-        m = re.match(r"^([A-Z][a-zA-Z]+) , \((optional|readonly|never None)\)$", dtype_str)
+        m = re.match(r"^([A-Z][a-zA-Z0-9_]+) , \((optional|readonly|never None|readonly, never None)\)$", dtype_str)
         if m:
             return CustomDataType(m.group(1))
 
-        m = re.match(r"^([a-zA-Z0-9_.]+)$", dtype_str)
+        m = re.match(r"^([a-zA-Z0-9_.]+) , \((readonly)\)$", dtype_str)
         if m:
             return CustomDataType(m.group(1))
 
