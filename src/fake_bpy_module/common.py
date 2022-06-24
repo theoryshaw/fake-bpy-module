@@ -1090,15 +1090,31 @@ class DataTypeRefiner:
         m = re.match(r"^boolean, default (False|True)$", dtype_str)
         if m:
             return BuiltinDataType("bool")
+        # Ex: boolean array of 3 items, (optional)
+        m = re.match(r"^(boolean) array of ([0-9]+) items(, .+)*$", dtype_str)
+        if m:
+            return BuiltinDataType(m.group(1), "list")
+        m = re.match(r"^boolean(, .+)*$", dtype_str)
+        if m:
+            return BuiltinDataType("bool")
+
+        m = re.match(r"^bytes(, .+)*$", dtype_str)
+        if m:
+            return BuiltinDataType("bytes")
+
         # Ex: int array of 2 items in [-32768, 32767], default (0, 0)
-        m = re.match(r"^(int|float) array of ([1-4]) items in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
+        m = re.match(r"^(int|float) array of ([0-9]+) items in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1), "list")
         # Ex: int in [-inf, inf], default 0, (readonly)
         m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1))
-        if re.match(r"^(str|string)(, default)*", dtype_str):
+        m = re.match(r"^(int|float)(, .+)*$", dtype_str)
+        if m:
+            return BuiltinDataType(m.group(1))
+
+        if re.match(r"^(str|string)(, .+)*$", dtype_str):
             return BuiltinDataType("str")
         if re.match(r"^tuple", dtype_str):
             return ModifierDataType("tuple")
@@ -1120,6 +1136,10 @@ class DataTypeRefiner:
         m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \((.+)\)$", dtype_str)
         if m:
             return CustomDataType(m.group(1), "list")
+        # Ex: List of FEdge objects
+        m = re.match(r"^List of ([A-Za-z0-9]+) objects$", dtype_str)
+        if m:
+            return CustomDataType(m.group(1), "list")
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
@@ -1129,9 +1149,9 @@ class DataTypeRefiner:
         if m:
             return CustomDataType(m.group(1))
 
-        m = re.match(r"^([a-zA-Z0-9_.]+)( , \((readonly)\))*$", dtype_str)
-        if m:
-            return CustomDataType(m.group(1))
+        # m = re.match(r"^([a-zA-Z0-9_.]+)( , \((readonly)\))*$", dtype_str)
+        # if m:
+        #     return CustomDataType(m.group(1))
 
         return None
         raise Exception(f"Not found ({data_type})")
