@@ -1093,7 +1093,7 @@ class DataTypeRefiner:
         # Ex: boolean array of 3 items, (optional)
         m = re.match(r"^(boolean) array of ([0-9]+) items(, .+)*$", dtype_str)
         if m:
-            return BuiltinDataType(m.group(1), "list")
+            return BuiltinDataType("bool", "list")
         m = re.match(r"^boolean(, .+)*$", dtype_str)
         if m:
             return BuiltinDataType("bool")
