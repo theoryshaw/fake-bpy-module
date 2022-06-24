@@ -1,4 +1,5 @@
 import re
+from types import BuiltinMethodType
 from typing import List, Dict
 
 from .utils import (
@@ -1067,20 +1068,21 @@ class DataTypeRefiner:
                 BuiltinDataType("int")
             ]
             return MixinDataType(dtypes)
-        # Ex: enum in ['WIREFRAME', 'SOLID', 'MATERIAL', 'RENDERED'], (optional)
-        m = re.match(r"^enum in \[(.*)\], \(optional\)$", dtype_str)
+        # Ex: enum in ['POINT', 'EDGE', 'FACE', 'CORNER', 'CURVE', 'INSTANCE']
+        m = re.match(r"^enum in \[(.+)\](, \(.+\))*$", dtype_str)
         if m:
             dtypes = [
                 BuiltinDataType("str"),
                 BuiltinDataType("int")
             ]
             return MixinDataType(dtypes)
-        # Ex: enum in ['POINT', 'EDGE', 'FACE', 'CORNER', 'CURVE', 'INSTANCE']
-        m = re.match(r"^enum in \[(.+)\]$", dtype_str)
+
+        # Ex: enum set in {'KEYMAP_FALLBACK'}, (optional)
+        m = re.match(r"^enum set in \{(.+)\}(, \(.+\))*$", dtype_str)
         if m:
             dtypes = [
-                BuiltinDataType("str"),
-                BuiltinDataType("int")
+                BuiltinDataType("str", "set"),
+                BuiltinDataType("int", "set")
             ]
             return MixinDataType(dtypes)
 
@@ -1089,14 +1091,11 @@ class DataTypeRefiner:
         if m:
             return BuiltinDataType("bool")
         # Ex: int array of 2 items in [-32768, 32767], default (0, 0)
-        m = re.match(r"^(int|float) array of ([1-4]) items in \[([-einf+0-9,. ]+)\], default \(([-e+0-9., ]+)\)$", dtype_str)
+        m = re.match(r"^(int|float) array of ([1-4]) items in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1), "list")
         # Ex: int in [-inf, inf], default 0, (readonly)
-        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\], default ([-e+0-9. ]+)(, \(readonly\))*$", dtype_str)
-        if m:
-            return BuiltinDataType(m.group(1))
-        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\](, \(optional\))*$", dtype_str)
+        m = re.match(r"^(int|float) in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1))
         if re.match(r"^(str|string)(, default)*", dtype_str):
@@ -1111,6 +1110,11 @@ class DataTypeRefiner:
                 CustomDataType(m.group(2), "list")
             ]
             return MixinDataType(dtypes)
+
+        # Ex: sequence of bpy.types.Action
+        m = re.match(r"^sequence of ([a-zA-Z0-9_.]+)$", dtype_str)
+        if m:
+            return CustomDataType(m.group(1), "list")
 
         # Ex: bpy_prop_collection of ThemeStripColor , (readonly, never None)
         m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \((.+)\)$", dtype_str)
