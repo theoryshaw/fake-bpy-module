@@ -1149,9 +1149,9 @@ class DataTypeRefiner:
         if m:
             return CustomDataType(m.group(1))
 
-        # m = re.match(r"^([a-zA-Z0-9_.]+)( , \((readonly)\))*$", dtype_str)
-        # if m:
-        #     return CustomDataType(m.group(1))
+        m = re.match(r"^([a-zA-Z0-9_.]+)$", dtype_str)
+        if m:
+            return CustomDataType(m.group(1))
 
         return None
         raise Exception(f"Not found ({data_type})")
