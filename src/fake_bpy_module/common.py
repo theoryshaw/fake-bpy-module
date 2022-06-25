@@ -1113,6 +1113,10 @@ class DataTypeRefiner:
         m = re.match(r"^(int|float)(, .+)*$", dtype_str)
         if m:
             return BuiltinDataType(m.group(1))
+        # Ex: float multi-dimensional array of 3 * 3 items in [-inf, inf]
+        m = re.match(r"^float multi-demensional array of ([0-9]) \* ([0-9]) items in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
+        if m:
+            return BuiltinDataType(m.group(1), "list")   # TODO: use list[list[...]
 
         if re.match(r"^(str|string)(, .+)*$", dtype_str):
             return BuiltinDataType("str")
@@ -1123,7 +1127,7 @@ class DataTypeRefiner:
         if m:
             dtypes = [
                 CustomDataType(m.group(1)),
-                CustomDataType(m.group(2), "list")
+                CustomDataType(m.group(2), "list")    # TODO: handle bpy_prop_collection
             ]
             return MixinDataType(dtypes)
 
@@ -1131,15 +1135,22 @@ class DataTypeRefiner:
         m = re.match(r"^sequence of ([a-zA-Z0-9_.]+)$", dtype_str)
         if m:
             return CustomDataType(m.group(1), "list")
-
         # Ex: bpy_prop_collection of ThemeStripColor , (readonly, never None)
         m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \((.+)\)$", dtype_str)
         if m:
-            return CustomDataType(m.group(1), "list")
+            return CustomDataType(m.group(1), "list")    # TODO: handle bpy_prop_collection
         # Ex: List of FEdge objects
         m = re.match(r"^List of ([A-Za-z0-9]+) objects$", dtype_str)
         if m:
             return CustomDataType(m.group(1), "list")
+        # Ex: list of ints
+        m = re.match(r"^(list|sequence) of (float|int|str|tuple)", dtype_str):
+        if m:
+            return BuiltinDataType(m.group(1), "list")
+        # Ex: BMElemSeq of BMEdge
+        m = re.match(r"BMElemSeq of ([a-zA-Z0-9]+)$", dtype_str)
+        if m:
+            return CustomDataType(m.group(1), "list")   # TODO: handle BMElemSeq
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
@@ -1150,6 +1161,10 @@ class DataTypeRefiner:
             return CustomDataType(m.group(1))
 
         m = re.match(r"^([a-zA-Z0-9_.]+)$", dtype_str)
+        if m:
+            return CustomDataType(m.group(1))
+
+        m = re.match(r"^([a-zA-Z0-9_.]+), \(readonly\)$", dtype_str)
         if m:
             return CustomDataType(m.group(1))
 
