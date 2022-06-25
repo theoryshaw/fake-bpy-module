@@ -1144,7 +1144,7 @@ class DataTypeRefiner:
         if m:
             return CustomDataType(m.group(1), "list")
         # Ex: list of ints
-        m = re.match(r"^(list|sequence) of (float|int|str|tuple)", dtype_str):
+        m = re.match(r"^(list|sequence) of (float|int|str|tuple)", dtype_str)
         if m:
             return BuiltinDataType(m.group(1), "list")
         # Ex: BMElemSeq of BMEdge
