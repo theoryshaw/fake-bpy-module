@@ -1172,7 +1172,7 @@ class DataTypeRefiner:
 
         m = re.match(r"^([a-zA-Z0-9_.]+)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1)), entry_points, module_name)
+            return CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name))
 
         m = re.match(r"^([a-zA-Z0-9_.]+) , \(readonly\)$", dtype_str)
         if m:
