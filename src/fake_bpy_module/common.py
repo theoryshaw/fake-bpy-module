@@ -1138,7 +1138,7 @@ class DataTypeRefiner:
         if m:
             return BuiltinDataType("float", "list")   # TODO: use list[list[...]
 
-        if re.match(r"^(str|string)(, .+)*$", dtype_str):
+        if re.match(r"^(str|string|strings)(, .+)*$", dtype_str):
             return BuiltinDataType("str")
         if re.match(r"^tuple", dtype_str):
             return ModifierDataType("tuple")
