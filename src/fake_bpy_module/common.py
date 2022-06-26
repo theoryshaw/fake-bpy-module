@@ -1188,7 +1188,8 @@ class DataTypeRefiner:
         if data_type.type() != 'INTERMIDIATE':
             output_log(LOG_LEVEL_WARN, "data_type should be 'INTERMIDIATE' but {}".format(data_type.type()))
 
-        r = self.new_get_refined_data_type(data_type, set(self._entry_points), module_name)
+        uniq = set([e.fullname() for e in self._entry_points])
+        r = self.new_get_refined_data_type(data_type, uniq, module_name)
         if not r:
             print(f"xxx {data_type.to_string()}")
         else:
