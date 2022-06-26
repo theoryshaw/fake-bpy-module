@@ -1116,7 +1116,7 @@ class DataTypeRefiner:
         # Ex: float multi-dimensional array of 3 * 3 items in [-inf, inf]
         m = re.match(r"^float multi-dimensional array of ([0-9]) \* ([0-9]) items in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
         if m:
-            return BuiltinDataType(m.group(1), "list")   # TODO: use list[list[...]
+            return BuiltinDataType("float", "list")   # TODO: use list[list[...]
 
         if re.match(r"^(str|string)(, .+)*$", dtype_str):
             return BuiltinDataType("str")
