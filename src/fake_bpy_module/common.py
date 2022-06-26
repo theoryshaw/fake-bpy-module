@@ -1066,6 +1066,9 @@ class DataTypeRefiner:
     def new_get_refined_data_type(self, data_type: 'DataType', entry_points: Set['EntryPoint'], module_name: str) -> 'DataType':
         dtype_str = data_type.to_string()
 
+        if re.match(r"^type$", dtype_str):
+            return None
+
         if re.match(r"^[23][dD] [Vv]ector$", dtype_str):
             return CustomDataType(self._parse_custom_data_type("Vector", entry_points, module_name))
         if re.match(r"^4x4 mathutils.Matrix$", dtype_str):
