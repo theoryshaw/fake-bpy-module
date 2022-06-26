@@ -1067,6 +1067,8 @@ class DataTypeRefiner:
             if dtype_str in uniq_full_names:
                 return dtype_str
 
+        return "Invalid"
+
         raise Exception(f"Could not find {string_to_parse} (Mod name: {module_name})")
 
     def new_get_refined_data_type(self, data_type: 'DataType', uniq_full_names: Set[str],
