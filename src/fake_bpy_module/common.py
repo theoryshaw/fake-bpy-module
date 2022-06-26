@@ -1054,7 +1054,7 @@ class DataTypeRefiner:
         self._entry_points: List['EntryPoint'] = entry_points
 
     def _parse_custom_data_type(self, string_to_parse: str, uniq_full_names: Set[str],
-                                uniq_module_names: Set[str],, module_name: str):
+                                uniq_module_names: Set[str], module_name: str):
         dtype_str = string_to_parse
         if dtype_str in uniq_full_names:
             return dtype_str
