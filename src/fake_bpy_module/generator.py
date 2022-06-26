@@ -806,45 +806,38 @@ class PackageAnalyzer:
                 for p in info.parameter_details():
                     refined_type = refiner.get_refined_data_type(
                         p.data_type(), info.module())
-                    print(refined_type.to_string())
                     p.set_data_type(refined_type)
 
                 return_ = info.return_()
                 if return_ is not None:
                     refined_type = refiner.get_refined_data_type(
                         return_.data_type(), info.module())
-                    print(refined_type.to_string())
                     return_.set_data_type(refined_type)
             # refine constant
             elif info.type() == "constant":
                 refined_type = refiner.get_refined_data_type(
                     info.data_type(), info.module())
-                print(refined_type.to_string())
                 info.set_data_type(refined_type)
             # refine class attributes and method parameters and return value
             elif info.type() == "class":
                 for a in info.attributes():
                     refined_type = refiner.get_refined_data_type(
                         a.data_type(), info.module())
-                    print(refined_type.to_string())
                     a.set_data_type(refined_type)
                 for m in info.methods():
                     for p in m.parameter_details():
                         refined_type = refiner.get_refined_data_type(
                             p.data_type(), info.module())
-                        print(refined_type.to_string())
                         p.set_data_type(refined_type)
 
                     return_ = m.return_()
                     if return_ is not None:
                         refined_type = refiner.get_refined_data_type(
                             return_.data_type(), info.module())
-                        print(refined_type.to_string())
                         return_.set_data_type(refined_type)
                 for i, c in enumerate(info.base_classes()):
                     refined_type = refiner.get_refined_data_type(
                         c, info.module())
-                    print(refined_type.to_string())
                     info.set_base_class(i, refined_type)
 
     def _remove_duplicate(self, gen_info: 'GenerationInfoByTarget') -> 'GenerationInfoByTarget':

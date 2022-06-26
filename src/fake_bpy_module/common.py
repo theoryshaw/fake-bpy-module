@@ -1,6 +1,6 @@
 import re
 from types import BuiltinMethodType
-from typing import List, Dict
+from typing import List, Dict, Set
 
 from .utils import (
     check_os,
@@ -1053,13 +1053,23 @@ class DataTypeRefiner:
         self._package_structure: 'ModuleStructure' = package_structure
         self._entry_points: List['EntryPoint'] = entry_points
 
-    def new_get_refined_data_type(self, data_type: 'DataType') -> 'DataType':
+    def _parse_custom_data_type(self, string_to_parse: str, entry_points: Set['EntryPoint'], module_name: str):
+        dtype_str = string_to_parse
+        if dtype_str in entry_points:
+            return dtype_str
+        dtype_str = "{}.{}".format(module_name, string_to_parse)
+        if dtype_str in entry_points:
+            return dtype_str
+        
+        raise Exception(f"Could not find {string_to_parse} (Mod name: {module_name})")
+
+    def new_get_refined_data_type(self, data_type: 'DataType', entry_points: Set['EntryPoint'], module_name: str) -> 'DataType':
         dtype_str = data_type.to_string()
 
         if re.match(r"^[23][dD] [Vv]ector$", dtype_str):
-            return CustomDataType("Vector")
+            return CustomDataType(self._parse_custom_data_type("Vector", entry_points, module_name))
         if re.match(r"^4x4 mathutils.Matrix$", dtype_str):
-            return CustomDataType("Matrix")
+            return CustomDataType(self._parse_custom_data_type("Matrix", entry_points, module_name))
 
         m = re.match(r"^enum in \[(.*)\], default (.+)$", dtype_str)
         if m:
@@ -1126,23 +1136,23 @@ class DataTypeRefiner:
         m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)$", dtype_str)
         if m:
             dtypes = [
-                CustomDataType(m.group(1)),
-                CustomDataType(m.group(2), "list")    # TODO: handle bpy_prop_collection
+                CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name)),
+                CustomDataType(self._parse_custom_data_type(m.group(2), entry_points, module_name), "list")    # TODO: handle bpy_prop_collection
             ]
             return MixinDataType(dtypes)
 
         # Ex: sequence of bpy.types.Action
         m = re.match(r"^sequence of ([a-zA-Z0-9_.]+)$", dtype_str)
         if m:
-            return CustomDataType(m.group(1), "list")
+            return CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name), "list")
         # Ex: bpy_prop_collection of ThemeStripColor , (readonly, never None)
         m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \((.+)\)$", dtype_str)
         if m:
-            return CustomDataType(m.group(1), "list")    # TODO: handle bpy_prop_collection
+            return CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name), "list")    # TODO: handle bpy_prop_collection
         # Ex: List of FEdge objects
         m = re.match(r"^List of ([A-Za-z0-9]+) objects$", dtype_str)
         if m:
-            return CustomDataType(m.group(1), "list")
+            return CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name), "list")
         # Ex: list of ints
         m = re.match(r"^(list|sequence) of (float|int|str)", dtype_str)
         if m:
@@ -1150,23 +1160,23 @@ class DataTypeRefiner:
         # Ex: BMElemSeq of BMEdge
         m = re.match(r"BMElemSeq of ([a-zA-Z0-9]+)$", dtype_str)
         if m:
-            return CustomDataType(m.group(1), "list")   # TODO: handle BMElemSeq
+            return CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name), "list")   # TODO: handle BMElemSeq
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
-            return CustomDataType(m.group(0))
+            return CustomDataType(self._parse_custom_data_type(m.group(0), entry_points, module_name))
 
         m = re.match(r"^([A-Z][a-zA-Z0-9_]+) , \((optional|readonly|never None|readonly, never None)\)$", dtype_str)
         if m:
-            return CustomDataType(m.group(1))
+            return CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name))
 
         m = re.match(r"^([a-zA-Z0-9_.]+)$", dtype_str)
         if m:
-            return CustomDataType(m.group(1))
+            return CustomDataType(self._parse_custom_data_type(m.group(1)), entry_points, module_name)
 
         m = re.match(r"^([a-zA-Z0-9_.]+) , \(readonly\)$", dtype_str)
         if m:
-            return CustomDataType(m.group(1))
+            return CustomDataType(self._parse_custom_data_type(m.group(1), entry_points, module_name))
 
         return None
         raise Exception(f"Not found ({data_type})")
@@ -1178,7 +1188,7 @@ class DataTypeRefiner:
         if data_type.type() != 'INTERMIDIATE':
             output_log(LOG_LEVEL_WARN, "data_type should be 'INTERMIDIATE' but {}".format(data_type.type()))
 
-        r = self.new_get_refined_data_type(data_type)
+        r = self.new_get_refined_data_type(data_type, set(self._entry_points), module_name)
         if not r:
             print(f"xxx {data_type.to_string()}")
         else:
