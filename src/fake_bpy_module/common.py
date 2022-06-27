@@ -1079,6 +1079,9 @@ class DataTypeRefiner:
         if re.match(r"^type$", dtype_str):
             return UnknownDataType()
 
+        if re.match(r"^function$", dtype_str):
+            return UnknownDataType()
+
         if re.match(r"^[23][dD] [Vv]ector$", dtype_str):
             s = self._parse_custom_data_type("Vector", uniq_full_names, uniq_module_names, module_name)
             if s:
@@ -1133,7 +1136,7 @@ class DataTypeRefiner:
         m = re.match(r"^boolean(, .+)*$", dtype_str)
         if m:
             return BuiltinDataType("bool")
-        m = re.match(r"^bool\(, optional\)*$", dtype_str)
+        m = re.match(r"^bool(, optional)*$", dtype_str)
         if m:
             return BuiltinDataType("bool")
 
@@ -1156,6 +1159,9 @@ class DataTypeRefiner:
         m = re.match(r"^float multi-dimensional array of ([0-9]) \* ([0-9]) items in \[([-einf+0-9,. ]+)\](, .+)*$", dtype_str)
         if m:
             return BuiltinDataType("float", "list")   # TODO: use list[list[...]
+        m = re.match(r"^double$", dtype_str)
+        if m:
+            return BuiltinDataType("float")
 
         if re.match(r"^(str|string|strings)(, .+)*$", dtype_str):
             return BuiltinDataType("str")
@@ -1221,6 +1227,14 @@ class DataTypeRefiner:
         m = re.match(r"^([A-Z][a-zA-Z0-9_]+) , \((optional|readonly|never None|readonly, never None)\)$", dtype_str)
         if m:
             s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
+
+        # Ex: CLIP_OT_add_marker
+        m = re.match(r"^([A-Z]+)_OT_([a-z_]+) , \(optional\)$", dtype_str)
+        if m:
+            idname = f"bpy.ops.{m.group(1).lower()}.{m.group(2)}"
+            self._parse_custom_data_type(idname, uniq_full_names, uniq_module_names, module_name)
             if s:
                 return CustomDataType(s)
 
