@@ -1207,6 +1207,10 @@ class DataTypeRefiner:
             s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
             if s:
                 return CustomDataType(s, "list")   # TODO: handle BMElemSeq
+
+        m = re.match(r"^dict with string keys$", dtype_str)
+        if m:
+            return ModifierDataType("dict")
         m = re.match(r"^(list|dict|set)$", dtype_str)
         if m:
             return ModifierDataType(m.group(1))
@@ -1245,6 +1249,12 @@ class DataTypeRefiner:
                 return CustomDataType(s)
 
         m = re.match(r"^([a-zA-Z0-9_.]+) , \(readonly\)$", dtype_str)
+        if m:
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
+
+        m = re.match(r"^([a-zA-Z0-9_.]+) ", dtype_str)
         if m:
             s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
             if s:
