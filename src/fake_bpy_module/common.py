@@ -1133,7 +1133,7 @@ class DataTypeRefiner:
         m = re.match(r"^boolean(, .+)*$", dtype_str)
         if m:
             return BuiltinDataType("bool")
-        m = re.match(r"^bool\(, optional\)*$")
+        m = re.match(r"^bool\(, optional\)*$", dtype_str)
         if m:
             return BuiltinDataType("bool")
 
