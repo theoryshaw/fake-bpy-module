@@ -1234,7 +1234,7 @@ class DataTypeRefiner:
         m = re.match(r"^([A-Z]+)_OT_([a-z_]+) , \(optional\)$", dtype_str)
         if m:
             idname = f"bpy.ops.{m.group(1).lower()}.{m.group(2)}"
-            self._parse_custom_data_type(idname, uniq_full_names, uniq_module_names, module_name)
+            s = self._parse_custom_data_type(idname, uniq_full_names, uniq_module_names, module_name)
             if s:
                 return CustomDataType(s)
 
