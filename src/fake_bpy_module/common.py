@@ -1054,7 +1054,7 @@ class DataTypeRefiner:
         self._entry_points: List['EntryPoint'] = entry_points
 
     def _parse_custom_data_type(self, string_to_parse: str, uniq_full_names: Set[str],
-                                uniq_module_names: Set[str], module_name: str):
+                                uniq_module_names: Set[str], module_name: str) -> str:
         dtype_str = string_to_parse
         if dtype_str in uniq_full_names:
             return dtype_str
@@ -1067,9 +1067,7 @@ class DataTypeRefiner:
             if dtype_str in uniq_full_names:
                 return dtype_str
 
-        return "Invalid"
-
-        raise Exception(f"Could not find {string_to_parse} (Mod name: {module_name})")
+        return None
 
     def new_get_refined_data_type(self, data_type: 'DataType', uniq_full_names: Set[str],
                                   uniq_module_names: Set[str], module_name: str) -> 'DataType':
@@ -1079,9 +1077,13 @@ class DataTypeRefiner:
             return None
 
         if re.match(r"^[23][dD] [Vv]ector$", dtype_str):
-            return CustomDataType(self._parse_custom_data_type("Vector", uniq_full_names, uniq_module_names, module_name))
+            s = self._parse_custom_data_type("Vector", uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
         if re.match(r"^4x4 mathutils.Matrix$", dtype_str):
-            return CustomDataType(self._parse_custom_data_type("Matrix", uniq_full_names, uniq_module_names, module_name))
+            s = self._parse_custom_data_type("Matrix", uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
 
         m = re.match(r"^enum in \[(.*)\], default (.+)$", dtype_str)
         if m:
@@ -1147,24 +1149,33 @@ class DataTypeRefiner:
 
         m = re.match(r"^([a-zA-Z0-9]+) bpy_prop_collection of ([a-zA-Z0-9]+) , \(readonly\)$", dtype_str)
         if m:
-            dtypes = [
-                CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)),
-                CustomDataType(self._parse_custom_data_type(m.group(2), uniq_full_names, uniq_module_names, module_name), "list")    # TODO: handle bpy_prop_collection
-            ]
-            return MixinDataType(dtypes)
+            s1 = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            s2 = self._parse_custom_data_type(m.group(2), uniq_full_names, uniq_module_names, module_name)
+            if s1 and s2:
+                dtypes = [
+                    CustomDataType(s1),
+                    CustomDataType(s2, "list")    # TODO: handle bpy_prop_collection
+                ]
+                return MixinDataType(dtypes)
 
         # Ex: sequence of bpy.types.Action
         m = re.match(r"^sequence of ([a-zA-Z0-9_.]+)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name), "list")
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s, "list")
         # Ex: bpy_prop_collection of ThemeStripColor , (readonly, never None)
         m = re.match(r"^bpy_prop_collection of ([a-zA-Z0-9]+) , \((.+)\)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name), "list")    # TODO: handle bpy_prop_collection
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s, "list")    # TODO: handle bpy_prop_collection
         # Ex: List of FEdge objects
         m = re.match(r"^List of ([A-Za-z0-9]+) objects$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name), "list")
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s, "list")
         # Ex: list of ints
         m = re.match(r"^(list|sequence) of (float|int|str)", dtype_str)
         if m:
@@ -1172,26 +1183,35 @@ class DataTypeRefiner:
         # Ex: BMElemSeq of BMEdge
         m = re.match(r"BMElemSeq of ([a-zA-Z0-9]+)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name), "list")   # TODO: handle BMElemSeq
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s, "list")   # TODO: handle BMElemSeq
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(0), uniq_full_names, uniq_module_names, module_name))
+            s = self._parse_custom_data_type(m.group(0), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
 
         m = re.match(r"^([A-Z][a-zA-Z0-9_]+) , \((optional|readonly|never None|readonly, never None)\)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name))
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
 
         m = re.match(r"^([a-zA-Z0-9_.]+)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name))
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
 
         m = re.match(r"^([a-zA-Z0-9_.]+) , \(readonly\)$", dtype_str)
         if m:
-            return CustomDataType(self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name))
+            s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
 
-        return None
-        raise Exception(f"Not found ({data_type})")
+        return UnknownDataType()
 
     def get_refined_data_type(self, data_type: 'DataType', module_name: str) -> 'DataType':
         if data_type.type() == 'UNKNOWN':
@@ -1203,10 +1223,11 @@ class DataTypeRefiner:
         uniq_full_names = set([e.fullname() for e in self._entry_points])
         uniq_module_names = set([e.module for e in self._entry_points])
         r = self.new_get_refined_data_type(data_type, uniq_full_names, uniq_module_names, module_name)
-        if not r:
+        if r.type() == 'UNKNOWN':
             print(f"xxx {data_type.to_string()}")
         else:
             print(f"ooo {data_type.to_string()} => {r.to_string()}")
+        return r
 
         # convert to aliased data type string
         dtype_str = data_type.to_string()
