@@ -1114,7 +1114,7 @@ class DataTypeRefiner:
             return MixinDataType(dtypes)
 
         # Ex: Enumerated constant
-        m = re.match(r"^Enumerated constant$", data_type)
+        m = re.match(r"^Enumerated constant$", dtype_str)
         if m:
             dtypes = [
                 BuiltinDataType("str", "set"),
