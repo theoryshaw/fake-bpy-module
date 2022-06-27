@@ -1073,6 +1073,9 @@ class DataTypeRefiner:
                                   uniq_module_names: Set[str], module_name: str) -> 'DataType':
         dtype_str = data_type.to_string()
 
+        if re.match(r"^\s*$", dtype_str):
+            return UnknownDataType()
+
         if re.match(r"^type$", dtype_str):
             return UnknownDataType()
 
@@ -1093,7 +1096,7 @@ class DataTypeRefiner:
             ]
             return MixinDataType(dtypes)
         # Ex: enum in ['POINT', 'EDGE', 'FACE', 'CORNER', 'CURVE', 'INSTANCE']
-        m = re.match(r"^enum in \[(.+)\](, \(.+\))*$", dtype_str)
+        m = re.match(r"^enum in \[(.*)\](, \(.+\))*$", dtype_str)
         if m:
             dtypes = [
                 BuiltinDataType("str"),
@@ -1102,7 +1105,16 @@ class DataTypeRefiner:
             return MixinDataType(dtypes)
 
         # Ex: enum set in {'KEYMAP_FALLBACK'}, (optional)
-        m = re.match(r"^enum set in \{(.+)\}(, \(.+\))*$", dtype_str)
+        m = re.match(r"^enum set in \{(.*)\}(, \(.+\))*$", dtype_str)
+        if m:
+            dtypes = [
+                BuiltinDataType("str", "set"),
+                BuiltinDataType("int", "set")
+            ]
+            return MixinDataType(dtypes)
+
+        # Ex: Enumerated constant
+        m = re.match(r"^Enumerated constant$", data_type)
         if m:
             dtypes = [
                 BuiltinDataType("str", "set"),
@@ -1119,6 +1131,9 @@ class DataTypeRefiner:
         if m:
             return BuiltinDataType("bool", "list")
         m = re.match(r"^boolean(, .+)*$", dtype_str)
+        if m:
+            return BuiltinDataType("bool")
+        m = re.match(r"^bool\(, optional\)*$")
         if m:
             return BuiltinDataType("bool")
 
@@ -1186,6 +1201,16 @@ class DataTypeRefiner:
             s = self._parse_custom_data_type(m.group(1), uniq_full_names, uniq_module_names, module_name)
             if s:
                 return CustomDataType(s, "list")   # TODO: handle BMElemSeq
+        m = re.match(r"^(list|dict|set)$", dtype_str)
+        if m:
+            return ModifierDataType(m.group(1))
+
+        # Ex: bpy.types.Struct subclass
+        m = re.match(r"^bpy.types.Struct subclass$", dtype_str)
+        if m:
+            s = self._parse_custom_data_type("bpy.types.Struct", uniq_full_names, uniq_module_names, module_name)
+            if s:
+                return CustomDataType(s)
 
         m = re.match(r"^[A-Z]([a-zA-Z]+)$", dtype_str)
         if m:
@@ -1211,7 +1236,7 @@ class DataTypeRefiner:
             if s:
                 return CustomDataType(s)
 
-        return UnknownDataType()
+        return IntermidiateDataType("Invalid")
 
     def get_refined_data_type(self, data_type: 'DataType', module_name: str) -> 'DataType':
         if data_type.type() == 'UNKNOWN':
@@ -1223,7 +1248,7 @@ class DataTypeRefiner:
         uniq_full_names = set([e.fullname() for e in self._entry_points])
         uniq_module_names = set([e.module for e in self._entry_points])
         r = self.new_get_refined_data_type(data_type, uniq_full_names, uniq_module_names, module_name)
-        if r.type() == 'UNKNOWN':
+        if r.type() == 'INTERMIDIATE':
             print(f"xxx {data_type.to_string()}")
         else:
             print(f"ooo {data_type.to_string()} => {r.to_string()}")
