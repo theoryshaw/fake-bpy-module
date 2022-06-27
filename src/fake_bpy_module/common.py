@@ -1074,7 +1074,7 @@ class DataTypeRefiner:
         dtype_str = data_type.to_string()
 
         if re.match(r"^type$", dtype_str):
-            return None
+            return UnknownDataType()
 
         if re.match(r"^[23][dD] [Vv]ector$", dtype_str):
             s = self._parse_custom_data_type("Vector", uniq_full_names, uniq_module_names, module_name)
