@@ -1249,6 +1249,7 @@ class DataTypeRefiner:
         uniq_module_names = set([e.module for e in self._entry_points])
         r = self.new_get_refined_data_type(data_type, uniq_full_names, uniq_module_names, module_name)
         if r.type() == 'INTERMIDIATE':
+            r = UnknownDataType()
             print(f"xxx {data_type.to_string()}")
         else:
             print(f"ooo {data_type.to_string()} => {r.to_string()}")
