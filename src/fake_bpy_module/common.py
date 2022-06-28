@@ -1201,6 +1201,19 @@ class DataTypeRefiner:
         m = re.match(r"^(list|sequence) of (float|int|str)", dtype_str)
         if m:
             return BuiltinDataType(m.group(2), "list")
+        # Ex: list of ( bmesh.types.BMVert )
+        m = re.match(r"^list of \( ([a-zA-Z., ]) \)", dtype_str)
+        if m:
+            items = m.group(1).split(",")
+            dtypes = []
+            for item in items:
+                s = self._parse_custom_data_type(item, uniq_full_names, uniq_module_names, module_name)
+                if s:
+                    dtypes.append(CustomDataType(s, "list"))
+            if len(dtypes) == 1:
+                return dtypes[0]
+            elif len(dtypes) > 1:
+                return CustomDataType(dtypes)
         # Ex: BMElemSeq of BMEdge
         m = re.match(r"BMElemSeq of ([a-zA-Z0-9]+)$", dtype_str)
         if m:
@@ -1260,25 +1273,9 @@ class DataTypeRefiner:
             if s:
                 return CustomDataType(s)
 
-        return IntermidiateDataType("Invalid")
+        return self.get_refined_data_type_slow(data_type, module_name)
 
-    def get_refined_data_type(self, data_type: 'DataType', module_name: str) -> 'DataType':
-        if data_type.type() == 'UNKNOWN':
-            return UnknownDataType()
-
-        if data_type.type() != 'INTERMIDIATE':
-            output_log(LOG_LEVEL_WARN, "data_type should be 'INTERMIDIATE' but {}".format(data_type.type()))
-
-        uniq_full_names = set([e.fullname() for e in self._entry_points])
-        uniq_module_names = set([e.module for e in self._entry_points])
-        r = self.new_get_refined_data_type(data_type, uniq_full_names, uniq_module_names, module_name)
-        if r.type() == 'INTERMIDIATE':
-            r = UnknownDataType()
-            print(f"xxx {data_type.to_string()}")
-        else:
-            print(f"ooo {data_type.to_string()} => {r.to_string()}")
-        return r
-
+    def get_refined_data_type_slow(self, data_type: 'DataType', module_name: str) -> 'DataType':
         # convert to aliased data type string
         dtype_str = data_type.to_string()
         for (key, value) in REPLACE_DATA_TYPE.items():
@@ -1512,7 +1509,24 @@ class DataTypeRefiner:
         elif len(dtype_list) >= 2:
             return MixinDataType(dtype_list)
         else:
+            return IntermidiateDataType("Invalid")
+
+    def get_refined_data_type(self, data_type: 'DataType', module_name: str) -> 'DataType':
+        if data_type.type() == 'UNKNOWN':
             return UnknownDataType()
+
+        if data_type.type() != 'INTERMIDIATE':
+            output_log(LOG_LEVEL_WARN, "data_type should be 'INTERMIDIATE' but {}".format(data_type.type()))
+
+        uniq_full_names = set([e.fullname() for e in self._entry_points])
+        uniq_module_names = set([e.module for e in self._entry_points])
+        r = self.new_get_refined_data_type(data_type, uniq_full_names, uniq_module_names, module_name)
+        if r.type() == 'INTERMIDIATE':
+            r = UnknownDataType()
+            print(f"xxx {data_type.to_string()}")
+        else:
+            print(f"ooo {data_type.to_string()} => {r.to_string()}")
+        return r
 
     def get_base_name(self, data_type: str) -> str:
         if data_type is None:
