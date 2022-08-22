@@ -1307,6 +1307,10 @@ class BpyModuleAnalyzer(AnalyzerWithModFile):
     def _add_iter_and_next(self, class_info: 'ClassInfo', type: str):
         info = FunctionInfo("method")
         info.set_name("__iter__")
+        info.set_parameters([])
+        info.set_parameter_details([])
+        info.set_class(class_info.name())
+        info.set_module(class_info.module())
         return_info = ReturnInfo()
         return_info.set_description("")
         return_info.set_data_type(CustomDataType("typing.Self", skip_refine=True))
